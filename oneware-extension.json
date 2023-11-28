@@ -1,0 +1,48 @@
+{
+  "category": "Tools",
+  "type": "Plugin",
+  "name": "OneWare.Vhdp Extension",
+  "id": "OneWare.VhdpModule",
+  "description": "OneWare.Vhdp for OneWare",
+  "license": "MIT",
+  "iconUrl": "https://raw.githubusercontent.com/ProtopSolutions/OneWare.Vhdp/main/Icon.png",
+  "tabs": [
+    {
+      "title": "Readme",
+      "contentUrl": "https://raw.githubusercontent.com/ProtopSolutions/OneWare.Vhdp/main/Extension.md"
+    },
+    {
+      "title": "License",
+      "contentUrl": "https://raw.githubusercontent.com/ProtopSolutions/OneWare.Vhdp/main/License.md"
+    }
+  ],
+  "links": [
+    {
+      "name": "Github",
+      "url": "https://github.com/ProtopSolutions/OneWare.Vhdp"
+    }
+  ],
+  "versions": [
+    {
+      "version": "0.1",
+      "targets": [
+        {
+          "target": "win-x64",
+          "url": "https://github.com/ProtopSolutions/OneWare.Vhdp/releases/download/0.1/OneWare.VhdpExtension_0.1_win-x64.zip"
+        },
+        {
+          "target": "linux-x64",
+          "url": "https://github.com/ProtopSolutions/OneWare.Vhdp/releases/download/0.1/OneWare.VhdpExtension_0.1_linux-x64.zip"
+        },
+        {
+          "target": "osx-x64",
+          "url": "https://github.com/ProtopSolutions/OneWare.Vhdp/releases/download/0.1/OneWare.VhdpExtension_0.1_osx-x64.zip"
+        },
+        {
+          "target": "osx-arm64",
+          "url": "https://github.com/ProtopSolutions/OneWare.Vhdp/releases/download/0.1/OneWare.VhdpExtension_0.1_osx-arm64.zip"
+        }
+      ]
+    }
+  ]
+}
