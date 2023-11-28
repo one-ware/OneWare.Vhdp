@@ -1,4 +1,4 @@
-![Icon](https://raw.githubusercontent.com/ProtopSolutions/OneWare.Vhdp/main/Icon.png)
+![Icon](https://raw.githubusercontent.com/ProtopSolutions/OneWare.Vhdp/main/Icon.svg)
 
 ### Get Started
 
