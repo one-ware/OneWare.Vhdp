@@ -10,6 +10,6 @@ public class TypeAssistanceVhdp : TypeAssistanceLsp
     public TypeAssistanceVhdp(IEditor editor, LanguageServiceBase ls) : base(editor, ls)
     {
         LineCommentSequence = "--";
-        FoldingStrategy = new RegexFoldingStrategy(FoldingRegexVhdp.FoldingStart, FoldingRegexVhdp.FoldingEnd);
+        FoldingStrategy = new RegexFoldingStrategy(FoldingRegexVhdp.FoldingStart(), FoldingRegexVhdp.FoldingEnd());
     }
 }

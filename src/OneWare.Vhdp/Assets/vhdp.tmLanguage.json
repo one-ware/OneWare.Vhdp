@@ -206,6 +206,11 @@
         {
           "match": "--.*$\\n?",
           "name": "comment.line.double-dash.vhdl"
+        },
+        {
+          "begin": "/\\*",
+          "end": "\\*/",
+          "name": "comment.multiline.vhdp"
         }
       ]
     },
