@@ -1,6 +1,6 @@
-﻿using CommunityToolkit.Mvvm.Input;
-using OneWare.SDK.Models;
+﻿using OneWare.SDK.Models;
 using OneWare.SDK.Services;
+using OneWare.SDK.ViewModels;
 using Prism.Ioc;
 using Prism.Modularity;
 
@@ -14,20 +14,10 @@ public class OneWareVhdpModule : IModule
 
     public void OnInitialized(IContainerProvider containerProvider)
     {
-        //This example adds a context menu for .vhd files
-        containerProvider.Resolve<IProjectExplorerService>().RegisterConstructContextMenu(x =>
-        {
-            if (x is [IProjectFile {Extension: ".vhd"} json])
-            {
-                return new[]
-                {
-                    new MenuItemModel("Hello World")
-                    {
-                        Header = "Hello World"
-                    }
-                };
-            }
-            return null;
-        });
+        containerProvider.Resolve<ILanguageManager>().RegisterTextMateLanguage("vhdp", "avares://OneWare.Vhdp/Assets/vhdp.tmLanguage.json", ".vhdp");
+        
+        containerProvider.Resolve<IErrorService>().RegisterErrorSource("VHDP");
+        
+        containerProvider.Resolve<ILanguageManager>().RegisterService(typeof(LanguageServiceVhdp),true, ".vhdp");
     }
 }
