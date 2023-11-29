@@ -19,4 +19,8 @@
         <PackageReference Include="OneWare.SDK" Version="0.12.2.0" Private="false" ExcludeAssets="runtime;Native"/>
     </ItemGroup>
     
+    <ItemGroup>
+      <ProjectReference Include="..\VHDPlus.Analyzer\src\VHDPlus.Analyzer\VHDPlus.Analyzer.csproj" />
+    </ItemGroup>
+    
 </Project>

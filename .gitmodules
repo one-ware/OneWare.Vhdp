@@ -1,0 +1,3 @@
+[submodule "src/VHDPlus.Analyzer"]
+	path = src/VHDPlus.Analyzer
+	url = https://github.com/VHDPlus/VHDPlus.Analyzer
