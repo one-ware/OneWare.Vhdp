@@ -32,7 +32,7 @@ public partial class FoldingRegexVhdp
                                                				  |({)
                                                				  
                                                             # Check for (
-                                                              |(\()
+                                                              |(\((?![^\r\n]*\)))
                                                			)
                                                		)
                                                	
@@ -66,7 +66,7 @@ public partial class FoldingRegexVhdp
                                              		  |(})
                                              		  
                                                     # Check for )
-                                                      |(\))
+                                                      |((?<!\(.*)\))
                                              	)
                                              )
                                              
