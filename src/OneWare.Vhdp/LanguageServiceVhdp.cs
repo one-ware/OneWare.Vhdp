@@ -8,70 +8,79 @@ using OneWare.SDK.ViewModels;
 using Prism.Ioc;
 using VHDPlus.Analyzer;
 using VHDPlus.Analyzer.Checks;
+using VHDPlus.Analyzer.Diagnostics;
 using VHDPlus.Analyzer.Elements;
 using VHDPlus.Analyzer.Info;
-using IFile = OneWare.SDK.Models.IFile;
 using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
 namespace OneWare.Vhdp;
 
-public class LanguageServiceVhdp : LanguageServiceBase, ILanguageService
+public class LanguageServiceVhdp : LanguageServiceBase
 {
-    private readonly HdpAnalyzer _hdpAnalyzer = new();
+    public HdpAnalyzer HdpAnalyzer { get; } = new();
     
-    public LanguageServiceVhdp(string name, string? workspace = null) : base(name, workspace)
+    public LanguageServiceVhdp(string? workspace = null) : base("VHDP", workspace)
     {
-    }
-
-    public ITypeAssistance GetTypeAssistance(IEditor editor)
-    {
-        return new TypeAssistanceVhdp(editor, this);
+        
     }
 
     public override Task ActivateAsync()
     {
         IsActivated = true;
-        //IsLanguageServiceReady = true;
-        return Task.CompletedTask;
+        IsLanguageServiceReady = true;
+        return base.ActivateAsync();
     }
 
-    public override Task RestartAsync()
+    public override Task DeactivateAsync()
     {
-        return Task.CompletedTask;
+        IsActivated = false;
+        IsLanguageServiceReady = false;
+        return base.DeactivateAsync();
+    }
+
+    public override ITypeAssistance GetTypeAssistance(IEditor editor)
+    {
+        return new TypeAssistanceVhdp(editor, this);
+    }
+
+    private int _version = 0;
+    
+    public override void RefreshTextDocument(string fullPath, string newText)
+    {
+        base.RefreshTextDocument(fullPath, newText);
+        _ = AnalyzeFullAsync(fullPath, newText);
+        _version++;
+    }
+
+    public async Task AnalyzeFullAsync(string fullPath, string newText)
+    {
+        await HdpAnalyzer.AnalyzeAsync(fullPath, AnalyzerMode.Check | AnalyzerMode.Indexing | AnalyzerMode.Resolve,
+            newText);
+        
+        var context = HdpAnalyzer.GetContext(fullPath);
+        
+        PublishDiag(new PublishDiagnosticsParams()
+        {
+            Uri = DocumentUri.Parse(fullPath),
+            Version = _version,
+            Diagnostics = new Container<Diagnostic>(context.Diagnostics.Select(x => new Diagnostic { 
+                    Message = x.Message,
+                    Range = new Range(x.StartLine, x.StartCol, x.EndLine, x.EndCol),
+                    Source = Name,
+                    Severity = x.Level switch
+                    {
+                        DiagnosticLevel.Error => DiagnosticSeverity.Error,
+                        DiagnosticLevel.Warning => DiagnosticSeverity.Warning,
+                        _ => DiagnosticSeverity.Hint
+                    }
+                  }).ToArray())
+        });
     }
     
-    #region Sync
-    
-
-    public async Task AnalyzeFullAsync(IEditor editor)
-    {
-        if (editor.CurrentFile == null) return;
-        
-        await _hdpAnalyzer.AnalyzeAsync(editor.FullPath, AnalyzerMode.Check | AnalyzerMode.Indexing | AnalyzerMode.Resolve,
-            editor.CurrentDocument.Text);
-
-        if (editor.CurrentFile == null) return;
-        
-        var context = _hdpAnalyzer.GetContext(editor.FullPath);
-        
-        var errorList = context.Diagnostics
-            .Select(x =>
-                new ErrorListItem(x.Message, (ErrorType) x.Level, editor.CurrentFile, "Vhdp", x.StartLine+1,
-                    x.StartCol+1, x.EndLine+1, x.EndCol+1)).ToList();
-            
-        ContainerLocator.Container.Resolve<IErrorService>().RefreshErrors(errorList, this.Name, editor.CurrentFile);
-    }
-    
-    #endregion
-
-    private void Format(AnalyzerContext context)
-    {
-    }
-
     public override Task<Hover?> RequestHoverAsync(string fullPath,
         Position pos)
     {
-        var context = _hdpAnalyzer.GetContext(fullPath);
+        var context = HdpAnalyzer.GetContext(fullPath);
 
         var offset = context.GetOffset(pos.Line, pos.Character + 1);
         var segment = AnalyzerHelper.GetSegmentFromOffset(context, offset);
@@ -109,29 +118,11 @@ public class LanguageServiceVhdp : LanguageServiceBase, ILanguageService
         return Task.FromResult<Hover?>(hover);
     }
 
-    public override Task<TextEditContainer?> RequestFormattingAsync(string fullPath)
-    {
-        var context = _hdpAnalyzer.GetContext(fullPath);
-        
-        var items = new List<TextEdit>
-        {
-            new TextEdit()
-        };
-
-        var eC = new TextEditContainer();
-        return Task.FromResult<TextEditContainer?>(new TextEditContainer(items));
-    }
-
-    public override Task<TextEditContainer?> RequestRangeFormattingAsync(string fullPath, Range range)
-    {
-        return Task.FromResult<TextEditContainer?>(null); //TODO
-    }
-    
     public override async Task<SignatureHelp?> RequestSignatureHelpAsync(string fullPath, Position pos)
     {
-        await _hdpAnalyzer.AnalyzeAsync(fullPath,AnalyzerMode.Indexing | AnalyzerMode.Resolve | AnalyzerMode.Check, null);
+        await HdpAnalyzer.AnalyzeAsync(fullPath,AnalyzerMode.Indexing | AnalyzerMode.Resolve | AnalyzerMode.Check, null);
         
-        var context = _hdpAnalyzer.GetContext(fullPath);
+        var context = HdpAnalyzer.GetContext(fullPath);
         
         var segment = AnalyzerHelper.SearchParameterOwner(
             AnalyzerHelper.GetSegmentFromOffset(context,
@@ -209,12 +200,18 @@ public class LanguageServiceVhdp : LanguageServiceBase, ILanguageService
     public override async Task<CompletionList?> RequestCompletionAsync(string fullPath, Position pos,
         string triggerChar, CompletionTriggerKind triggerKind)
     {
-        await _hdpAnalyzer.AnalyzeAsync(fullPath, AnalyzerMode.Indexing | AnalyzerMode.Resolve, null);
+        //TODO Change
+        var editor = ContainerLocator.Container.Resolve<IDockService>().OpenFiles
+            .FirstOrDefault(x => x.Key.FullPath == fullPath);
+        var text = (editor.Value as IEditor)?.CurrentDocument.Text;
         
-        var context = _hdpAnalyzer.GetContext(fullPath);
+        await HdpAnalyzer.AnalyzeAsync(fullPath, AnalyzerMode.Indexing | AnalyzerMode.Resolve, text);
+        
+        var context = HdpAnalyzer.GetContext(fullPath);
+
+        var offset = context.GetOffset(pos.Line, pos.Character);
         var segment =
-            AnalyzerHelper.GetSegmentFromOffset(context,
-                context.GetOffset(pos.Line, pos.Character)) ?? context.TopSegment;
+            AnalyzerHelper.GetSegmentFromOffset(context, offset) ?? context.TopSegment;
 
         var items = new List<CompletionItem>();
         if (segment.Parent == null) return items;
@@ -623,6 +620,19 @@ public class LanguageServiceVhdp : LanguageServiceBase, ILanguageService
         return items.Count > 0 ? new CompletionList(items) : null;
     }
 
+    public override Task<TextEditContainer?> RequestFormattingAsync(string fullPath)
+    {
+        var context = HdpAnalyzer.GetContext(fullPath);
+        
+        var items = new List<TextEdit>
+        {
+            new TextEdit()
+        };
+
+        var eC = new TextEditContainer();
+        return Task.FromResult<TextEditContainer?>(new TextEditContainer(items));
+    }
+
     private static string ParameterShort(List<FunctionParameter> parameters)
     {
         return parameters.Count switch
@@ -675,7 +685,7 @@ public class LanguageServiceVhdp : LanguageServiceBase, ILanguageService
 
     public override Task<IEnumerable<LocationOrLocationLink>?> RequestDefinitionAsync(string fullPath, Position pos)
     {
-        var context = _hdpAnalyzer.GetContext(fullPath);
+        var context = HdpAnalyzer.GetContext(fullPath);
         var segment = AnalyzerHelper.GetSegmentFromOffset(context,
             context.GetOffset(pos.Line, pos.Character));
 

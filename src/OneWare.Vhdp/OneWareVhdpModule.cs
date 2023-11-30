@@ -15,7 +15,6 @@ public class OneWareVhdpModule : IModule
     public void OnInitialized(IContainerProvider containerProvider)
     {
         containerProvider.Resolve<ILanguageManager>().RegisterTextMateLanguage("vhdp", "avares://OneWare.Vhdp/Assets/vhdp.tmLanguage.json", ".vhdp");
-        
         containerProvider.Resolve<IErrorService>().RegisterErrorSource("VHDP");
         
         containerProvider.Resolve<ILanguageManager>().RegisterService(typeof(LanguageServiceVhdp),true, ".vhdp");
