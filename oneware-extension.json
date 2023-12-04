@@ -3,9 +3,9 @@
   "type": "Plugin",
   "name": "VHDP Support",
   "id": "OneWareVhdpModule",
-  "description": "VHDP Support for OneWare",
+  "description": "VHDP Language Support for OneWare",
   "license": "MIT",
-  "iconUrl": "https://raw.githubusercontent.com/ProtopSolutions/OneWare.Vhdp/main/Icon_256.png",
+  "iconUrl": "https://raw.githubusercontent.com/ProtopSolutions/OneWare.Vhdp/main/Icon_256x.png",
   "tabs": [
     {
       "title": "Readme",
@@ -20,6 +20,10 @@
     {
       "name": "Github",
       "url": "https://github.com/ProtopSolutions/OneWare.Vhdp"
+    },
+    {
+      "name": "VHDPlus Documentation",
+      "url": "https://vhdplus.com"
     }
   ],
   "versions": [
