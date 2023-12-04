@@ -1,6 +1,6 @@
 # OneWare.Vhdp
 
-Template for creating Extensions for OneWare Studio
+VHDP Support for OneWare
 
 ![image](https://raw.githubusercontent.com/ProtopSolutions/OneWare.Vhdp/main/Icon_256x.png)
 
