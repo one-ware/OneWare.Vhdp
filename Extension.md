@@ -1,5 +1,8 @@
-![Icon](https://raw.githubusercontent.com/ProtopSolutions/OneWare.Vhdp/main/Icon.svg)
+![Icon](https://raw.githubusercontent.com/ProtopSolutions/OneWare.Vhdp/main/Icon_256x.png)
 
 ### Get Started
 
-> This text will be visible in the builtin package manager
+1. Install Extension
+2. Start using VHDP
+
+More information on the [VHDPlus Website](https://vhdplus.com)
