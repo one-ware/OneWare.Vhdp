@@ -1,4 +1,6 @@
-﻿using OmniSharp.Extensions.LanguageServer.Protocol;
+﻿using System.Reactive.Disposables;
+using System.Reactive.Linq;
+using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OneWare.SDK.Enums;
 using OneWare.SDK.LanguageService;
@@ -15,17 +17,20 @@ using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
 namespace OneWare.Vhdp;
 
-public class LanguageServiceVhdp : LanguageServiceBase
+public class LanguageServiceVhdp(string workspace) : LanguageServiceBase("VHDP", workspace)
 {
-    public HdpAnalyzer HdpAnalyzer { get; } = new();
-    
-    public LanguageServiceVhdp(string? workspace = null) : base("VHDP", workspace)
-    {
-        
-    }
+    private int _version = 0;
+    public HdpAnalyzer HdpAnalyzer { get; } = new(workspace);
+
+    private CompositeDisposable _compositeDisposable = new();
 
     public override Task ActivateAsync()
     {
+        Observable.FromEventPattern<string>(HdpAnalyzer, nameof(HdpAnalyzer.DiagnosticsChanged)).Subscribe(x =>
+        {
+            RefreshDiagnostics(x.EventArgs);
+        }).DisposeWith(_compositeDisposable);
+        
         IsActivated = true;
         IsLanguageServiceReady = true;
         return base.ActivateAsync();
@@ -33,6 +38,8 @@ public class LanguageServiceVhdp : LanguageServiceBase
 
     public override Task DeactivateAsync()
     {
+        _compositeDisposable.Dispose();
+        _compositeDisposable = new CompositeDisposable();
         IsActivated = false;
         IsLanguageServiceReady = false;
         return base.DeactivateAsync();
@@ -43,20 +50,20 @@ public class LanguageServiceVhdp : LanguageServiceBase
         return new TypeAssistanceVhdp(editor, this);
     }
 
-    private int _version = 0;
-    
+    public override void RefreshTextDocument(string fullPath, Container<TextDocumentContentChangeEvent> changes)
+    {
+        base.RefreshTextDocument(fullPath, changes);
+        HdpAnalyzer.ProcessChanges(fullPath, changes);
+    }
+
     public override void RefreshTextDocument(string fullPath, string newText)
     {
         base.RefreshTextDocument(fullPath, newText);
-        _ = AnalyzeFullAsync(fullPath, newText);
-        _version++;
+        HdpAnalyzer.ProcessChanges(fullPath, newText);
     }
-
-    public async Task AnalyzeFullAsync(string fullPath, string newText)
+    
+    private void RefreshDiagnostics(string fullPath)
     {
-        await HdpAnalyzer.AnalyzeAsync(fullPath, AnalyzerMode.Check | AnalyzerMode.Indexing | AnalyzerMode.Resolve,
-            newText);
-        
         var context = HdpAnalyzer.GetContext(fullPath);
         
         PublishDiag(new PublishDiagnosticsParams()
@@ -64,16 +71,16 @@ public class LanguageServiceVhdp : LanguageServiceBase
             Uri = DocumentUri.Parse(fullPath),
             Version = _version,
             Diagnostics = new Container<Diagnostic>(context.Diagnostics.Select(x => new Diagnostic { 
-                    Message = x.Message,
-                    Range = new Range(x.StartLine, x.StartCol, x.EndLine, x.EndCol),
-                    Source = Name,
-                    Severity = x.Level switch
-                    {
-                        DiagnosticLevel.Error => DiagnosticSeverity.Error,
-                        DiagnosticLevel.Warning => DiagnosticSeverity.Warning,
-                        _ => DiagnosticSeverity.Hint
-                    }
-                  }).ToArray())
+                Message = x.Message,
+                Range = new Range(x.StartLine, x.StartCol, x.EndLine, x.EndCol),
+                Source = Name,
+                Severity = x.Level switch
+                {
+                    DiagnosticLevel.Error => DiagnosticSeverity.Error,
+                    DiagnosticLevel.Warning => DiagnosticSeverity.Warning,
+                    _ => DiagnosticSeverity.Hint
+                }
+            }).ToArray())
         });
     }
     
@@ -118,9 +125,10 @@ public class LanguageServiceVhdp : LanguageServiceBase
         return Task.FromResult<Hover?>(hover);
     }
 
-    public override async Task<SignatureHelp?> RequestSignatureHelpAsync(string fullPath, Position pos)
+    public override async Task<SignatureHelp?> RequestSignatureHelpAsync(string fullPath, Position pos, SignatureHelpTriggerKind triggerKind, string? triggerChar,
+        bool isRetrigger, SignatureHelp? activeSignatureHelp)
     {
-        await HdpAnalyzer.AnalyzeAsync(fullPath,AnalyzerMode.Indexing | AnalyzerMode.Resolve | AnalyzerMode.Check, null);
+        await HdpAnalyzer.AnalyzeAsync(fullPath,AnalyzerMode.Indexing | AnalyzerMode.Resolve | AnalyzerMode.Check);
         
         var context = HdpAnalyzer.GetContext(fullPath);
         
@@ -197,16 +205,9 @@ public class LanguageServiceVhdp : LanguageServiceBase
         return null;
     }
 
-    public override async Task<CompletionList?> RequestCompletionAsync(string fullPath, Position pos,
-        string triggerChar, CompletionTriggerKind triggerKind)
+    public override async Task<CompletionList?> RequestCompletionAsync(string fullPath, Position pos,CompletionTriggerKind triggerKind, string? triggerChar)
     {
-        //TODO Change
-        var editor = ContainerLocator.Container.Resolve<IDockService>().OpenFiles
-            .FirstOrDefault(x => x.Key.FullPath == fullPath);
-        var text = (editor.Value as IEditor)?.CurrentDocument.Text;
-        
-        await HdpAnalyzer.AnalyzeAsync(fullPath, AnalyzerMode.Indexing | AnalyzerMode.Resolve, text);
-        
+        await HdpAnalyzer.AnalyzeAsync(fullPath, AnalyzerMode.Indexing | AnalyzerMode.Resolve);
         var context = HdpAnalyzer.GetContext(fullPath);
 
         var offset = context.GetOffset(pos.Line, pos.Character);
@@ -227,7 +228,7 @@ public class LanguageServiceVhdp : LanguageServiceBase
         if (useConcatParent && concatParent.Parent == null) return items;
         
         var validSegments = SegmentCheck
-            .GetValidSegments(useConcatParent ? concatParent.Parent : segment.Parent, inParameter).ToList();
+            .GetValidSegments(useConcatParent ? concatParent.Parent! : segment.Parent, inParameter).ToList();
         
         switch (triggerChar)
         {
@@ -781,5 +782,20 @@ public class LanguageServiceVhdp : LanguageServiceBase
             Range = new Range(startLine, startCol, endLine, endCol),
             Uri = DocumentUri.FromFileSystemPath(definition.Context.FilePath)
         });
+    }
+
+    public override IEnumerable<string> GetCompletionTriggerChars()
+    {
+        return ["."];
+    }
+
+    public override IEnumerable<string> GetSignatureHelpTriggerChars()
+    {
+        return ["("];
+    }
+
+    public override IEnumerable<string> GetSignatureHelpRetriggerChars()
+    {
+        return [","];
     }
 }
