@@ -210,7 +210,7 @@ public class TypeAssistanceVhdp : TypeAssistanceLanguageService
     {
         var quickMenu = await base.GetQuickMenuAsync(offset);
 
-        var context = _languageServiceVhdp.HdpAnalyzer.GetContext(CurrentFile.FullPath);
+        var context = _languageServiceVhdp.HdpProjectContext.GetContext(CurrentFile.FullPath);
 
         var segment = AnalyzerHelper.GetSegmentFromOffset(context, offset);
         if (segment is { SegmentType: SegmentType.NewComponent })

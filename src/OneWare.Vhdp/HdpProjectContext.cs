@@ -13,7 +13,7 @@ using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
 namespace OneWare.Vhdp;
 
-public class HdpAnalyzer
+public class HdpProjectContext
 {
     private readonly string _workspace;
 
@@ -24,7 +24,7 @@ public class HdpAnalyzer
 
     public event EventHandler<string>? DiagnosticsChanged;
     
-    public HdpAnalyzer(string workspace)
+    public HdpProjectContext(string workspace)
     {
         _workspace = workspace;
         _ = LoadWorkspaceAsync();
@@ -61,6 +61,7 @@ public class HdpAnalyzer
     public void ProcessChanges(string fullPath, string newText)
     {
         _documents[fullPath] = newText;
+        _ = AnalyzeAsync(fullPath, AnalyzerMode.Indexing | AnalyzerMode.Check | AnalyzerMode.Resolve);
     }
     
     private async Task LoadWorkspaceAsync()
@@ -79,10 +80,14 @@ public class HdpAnalyzer
             ProjectHelper.ImportEntries(_projectRoot.FullPath, _projectRoot);
             
             //Read and Index
-            await Task.WhenAll(_projectRoot.Files.Where(x => x.Extension == ".vhdp")
+            await Task.WhenAll(_projectRoot.Files.Where(x => x.Extension is ".vhdp")
                 .Select(x => ReadAndIndexAsync(x.FullPath)));
             
-            //Resolve and Check
+            //Resolve
+            await Task.WhenAll(_analyzerContexts.Select(x =>
+                AnalyzeAsync(x.Key,  AnalyzerMode.Resolve)));
+            
+            //Check
             await Task.WhenAll(_analyzerContexts.Select(x =>
                 AnalyzeAsync(x.Key, AnalyzerMode.Resolve | AnalyzerMode.Check)));
         }
@@ -115,8 +120,7 @@ public class HdpAnalyzer
     {
         try
         {
-            var text = GetDocument(fullPath);
-
+            var text = GetDocument(fullPath).Replace("\t", "    ");
             var pC = new ProjectContext();
             pC.Files.AddRange(_analyzerContexts.Values);
 

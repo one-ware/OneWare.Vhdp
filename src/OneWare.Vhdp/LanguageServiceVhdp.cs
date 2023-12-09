@@ -20,13 +20,13 @@ namespace OneWare.Vhdp;
 public class LanguageServiceVhdp(string workspace) : LanguageServiceBase("VHDP", workspace)
 {
     private int _version = 0;
-    public HdpAnalyzer HdpAnalyzer { get; } = new(workspace);
+    public HdpProjectContext HdpProjectContext { get; } = new(workspace);
 
     private CompositeDisposable _compositeDisposable = new();
 
     public override Task ActivateAsync()
     {
-        Observable.FromEventPattern<string>(HdpAnalyzer, nameof(HdpAnalyzer.DiagnosticsChanged)).Subscribe(x =>
+        Observable.FromEventPattern<string>(HdpProjectContext, nameof(HdpProjectContext.DiagnosticsChanged)).Subscribe(x =>
         {
             RefreshDiagnostics(x.EventArgs);
         }).DisposeWith(_compositeDisposable);
@@ -53,18 +53,18 @@ public class LanguageServiceVhdp(string workspace) : LanguageServiceBase("VHDP",
     public override void RefreshTextDocument(string fullPath, Container<TextDocumentContentChangeEvent> changes)
     {
         base.RefreshTextDocument(fullPath, changes);
-        HdpAnalyzer.ProcessChanges(fullPath, changes);
+        HdpProjectContext.ProcessChanges(fullPath, changes);
     }
 
     public override void RefreshTextDocument(string fullPath, string newText)
     {
         base.RefreshTextDocument(fullPath, newText);
-        HdpAnalyzer.ProcessChanges(fullPath, newText);
+        HdpProjectContext.ProcessChanges(fullPath, newText);
     }
     
     private void RefreshDiagnostics(string fullPath)
     {
-        var context = HdpAnalyzer.GetContext(fullPath);
+        var context = HdpProjectContext.GetContext(fullPath);
         
         PublishDiag(new PublishDiagnosticsParams()
         {
@@ -87,7 +87,7 @@ public class LanguageServiceVhdp(string workspace) : LanguageServiceBase("VHDP",
     public override Task<Hover?> RequestHoverAsync(string fullPath,
         Position pos)
     {
-        var context = HdpAnalyzer.GetContext(fullPath);
+        var context = HdpProjectContext.GetContext(fullPath);
 
         var offset = context.GetOffset(pos.Line, pos.Character + 1);
         var segment = AnalyzerHelper.GetSegmentFromOffset(context, offset);
@@ -128,9 +128,9 @@ public class LanguageServiceVhdp(string workspace) : LanguageServiceBase("VHDP",
     public override async Task<SignatureHelp?> RequestSignatureHelpAsync(string fullPath, Position pos, SignatureHelpTriggerKind triggerKind, string? triggerChar,
         bool isRetrigger, SignatureHelp? activeSignatureHelp)
     {
-        await HdpAnalyzer.AnalyzeAsync(fullPath,AnalyzerMode.Indexing | AnalyzerMode.Resolve | AnalyzerMode.Check);
+        await HdpProjectContext.AnalyzeAsync(fullPath,AnalyzerMode.Indexing | AnalyzerMode.Resolve | AnalyzerMode.Check);
         
-        var context = HdpAnalyzer.GetContext(fullPath);
+        var context = HdpProjectContext.GetContext(fullPath);
         
         var segment = AnalyzerHelper.SearchParameterOwner(
             AnalyzerHelper.GetSegmentFromOffset(context,
@@ -207,8 +207,8 @@ public class LanguageServiceVhdp(string workspace) : LanguageServiceBase("VHDP",
 
     public override async Task<CompletionList?> RequestCompletionAsync(string fullPath, Position pos,CompletionTriggerKind triggerKind, string? triggerChar)
     {
-        await HdpAnalyzer.AnalyzeAsync(fullPath, AnalyzerMode.Indexing | AnalyzerMode.Resolve);
-        var context = HdpAnalyzer.GetContext(fullPath);
+        await HdpProjectContext.AnalyzeAsync(fullPath, AnalyzerMode.Indexing | AnalyzerMode.Resolve);
+        var context = HdpProjectContext.GetContext(fullPath);
 
         var offset = context.GetOffset(pos.Line, pos.Character);
         var segment =
@@ -623,7 +623,7 @@ public class LanguageServiceVhdp(string workspace) : LanguageServiceBase("VHDP",
 
     public override Task<TextEditContainer?> RequestFormattingAsync(string fullPath)
     {
-        var context = HdpAnalyzer.GetContext(fullPath);
+        var context = HdpProjectContext.GetContext(fullPath);
         
         var items = new List<TextEdit>
         {
@@ -686,7 +686,7 @@ public class LanguageServiceVhdp(string workspace) : LanguageServiceBase("VHDP",
 
     public override Task<IEnumerable<LocationOrLocationLink>?> RequestDefinitionAsync(string fullPath, Position pos)
     {
-        var context = HdpAnalyzer.GetContext(fullPath);
+        var context = HdpProjectContext.GetContext(fullPath);
         var segment = AnalyzerHelper.GetSegmentFromOffset(context,
             context.GetOffset(pos.Line, pos.Character));
 
