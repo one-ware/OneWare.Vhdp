@@ -2,12 +2,8 @@
 using System.Reactive.Linq;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using OneWare.SDK.Enums;
 using OneWare.SDK.LanguageService;
-using OneWare.SDK.Models;
-using OneWare.SDK.Services;
 using OneWare.SDK.ViewModels;
-using Prism.Ioc;
 using VHDPlus.Analyzer;
 using VHDPlus.Analyzer.Checks;
 using VHDPlus.Analyzer.Diagnostics;
@@ -31,6 +27,7 @@ public class LanguageServiceVhdp(string workspace) : LanguageServiceBase("VHDP",
             RefreshDiagnostics(x.EventArgs);
         }).DisposeWith(_compositeDisposable);
         
+        HdpProjectContext.Activate();
         IsActivated = true;
         IsLanguageServiceReady = true;
         return base.ActivateAsync();
@@ -40,6 +37,7 @@ public class LanguageServiceVhdp(string workspace) : LanguageServiceBase("VHDP",
     {
         _compositeDisposable.Dispose();
         _compositeDisposable = new CompositeDisposable();
+        HdpProjectContext.Deactivate();
         IsActivated = false;
         IsLanguageServiceReady = false;
         return base.DeactivateAsync();
@@ -52,12 +50,14 @@ public class LanguageServiceVhdp(string workspace) : LanguageServiceBase("VHDP",
 
     public override void RefreshTextDocument(string fullPath, Container<TextDocumentContentChangeEvent> changes)
     {
+        _version++;
         base.RefreshTextDocument(fullPath, changes);
         HdpProjectContext.ProcessChanges(fullPath, changes);
     }
 
     public override void RefreshTextDocument(string fullPath, string newText)
     {
+        _version++;
         base.RefreshTextDocument(fullPath, newText);
         HdpProjectContext.ProcessChanges(fullPath, newText);
     }

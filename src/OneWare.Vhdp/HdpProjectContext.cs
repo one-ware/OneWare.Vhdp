@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Text;
-using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OneWare.ProjectSystem.Models;
 using OneWare.SDK.Helpers;
@@ -8,28 +7,34 @@ using OneWare.SDK.Services;
 using OneWare.UniversalFpgaProjectSystem.Parser;
 using Prism.Ioc;
 using VHDPlus.Analyzer;
-using VHDPlus.Analyzer.Diagnostics;
-using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
 namespace OneWare.Vhdp;
 
-public class HdpProjectContext
+public class HdpProjectContext(string workspace)
 {
-    private readonly string _workspace;
+    public string Workspace { get; } = workspace;
 
     private readonly Dictionary<string, string> _documents = new();
     private readonly Dictionary<string, AnalyzerContext> _analyzerContexts = new();
 
     private UniversalProjectRoot? _projectRoot;
-
+    private ProjectWatcher? _projectWatcher;
+    
     public event EventHandler<string>? DiagnosticsChanged;
     
-    public HdpProjectContext(string workspace)
+    public void Activate()
     {
-        _workspace = workspace;
+        _projectWatcher = new ProjectWatcher(this);
         _ = LoadWorkspaceAsync();
     }
 
+    public void Deactivate()
+    {
+        _projectWatcher?.Dispose();
+        _analyzerContexts.Clear();
+        _documents.Clear();
+    }
+    
     public void ProcessChanges(string fullPath, Container<TextDocumentContentChangeEvent> changes)
     {
         _documents[fullPath] = ApplyChanges(_documents[fullPath], changes);
@@ -68,7 +73,7 @@ public class HdpProjectContext
     {
         try
         {
-            var files = Directory.GetFiles(_workspace);
+            var files = Directory.GetFiles(Workspace);
             var projectFile = files.FirstOrDefault(x =>
                 Path.GetExtension(x).Equals(".fpgaproj", StringComparison.OrdinalIgnoreCase));
 
@@ -133,8 +138,8 @@ public class HdpProjectContext
                     await Task.Run(() => Analyzer.Analyze(_analyzerContexts[fullPath], mode, pC));
             stopWatch.Stop();
 
-            ContainerLocator.Container.Resolve<ILogger>()
-                .Log($"Analyzing {fullPath} finished after {stopWatch.ElapsedMilliseconds}ms", ConsoleColor.Gray);
+            //ContainerLocator.Container.Resolve<ILogger>()
+            //    .Log($"Analyzing {fullPath} finished after {stopWatch.ElapsedMilliseconds}ms", ConsoleColor.Gray);
 
             if (mode is AnalyzerMode.Indexing or AnalyzerMode.Resolve) return;
             
@@ -145,4 +150,41 @@ public class HdpProjectContext
             Debug.WriteLine(e.Message);
         }
     }
+    
+    #region Watch Project
+
+    public void AddPath(string fullPath)
+    {
+        if (_projectRoot == null) return;
+        if (_projectRoot.IsPathIncluded(fullPath) && Path.GetExtension(fullPath) is ".vhdp")
+        {
+            _ = ReadAndIndexAsync(fullPath);
+        }
+    }
+    
+    public void RemovePath(string fullPath)
+    {
+        if (_projectRoot?.Search(fullPath) is { } entry)
+        {
+            _analyzerContexts.Remove(fullPath);
+        }
+    }
+    
+    public void RenamePath(string oldPath, string newPath)
+    {
+        if (_projectRoot == null) return;
+        RemovePath(oldPath);
+        AddPath(newPath);
+    }
+
+    public void RefreshPath(string fullPath)
+    {
+        if (_projectRoot == null) return;
+        if (_projectRoot.IsPathIncluded(fullPath))
+        {
+            _ = ReadAndIndexAsync(fullPath);
+        }
+    }
+    
+    #endregion
 }

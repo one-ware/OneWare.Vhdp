@@ -1,12 +1,13 @@
 ﻿using System.Text;
+using Avalonia;
 using Avalonia.Input;
+using CommunityToolkit.Mvvm.Input;
 using OneWare.SDK.EditorExtensions;
 using OneWare.SDK.LanguageService;
 using OneWare.SDK.ViewModels;
 using OneWare.Vhdp.AutoConnect;
 using OneWare.Vhdp.Folding;
 using OneWare.Vhdp.Formatting;
-using ReactiveUI;
 using VHDPlus.Analyzer;
 using VHDPlus.Analyzer.Elements;
 
@@ -216,14 +217,12 @@ public class TypeAssistanceVhdp : TypeAssistanceLanguageService
         if (segment is { SegmentType: SegmentType.NewComponent })
         {
             quickMenu ??= [];
-
             quickMenu.Add(new MenuItemViewModel("CreateSignals")
             {
                 Header = "Create Signals",
-                Command = ReactiveCommand.Create(() => VhdpAutoConnect.AddSignals(CodeBox, segment)),
+                Command = new RelayCommand(() => VhdpAutoConnect.AddSignals(CodeBox, segment)),
             });
         }
-
         return quickMenu;
     }
 }
