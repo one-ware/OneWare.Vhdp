@@ -2,9 +2,9 @@
 using Avalonia;
 using Avalonia.Input;
 using CommunityToolkit.Mvvm.Input;
-using OneWare.SDK.EditorExtensions;
-using OneWare.SDK.LanguageService;
-using OneWare.SDK.ViewModels;
+using OneWare.Essentials.EditorExtensions;
+using OneWare.Essentials.LanguageService;
+using OneWare.Essentials.ViewModels;
 using OneWare.Vhdp.AutoConnect;
 using OneWare.Vhdp.Folding;
 using OneWare.Vhdp.Formatting;

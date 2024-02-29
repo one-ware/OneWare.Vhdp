@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using AvaloniaEdit;
-using OneWare.SDK.Services;
+using OneWare.Essentials.Services;
 using Prism.Ioc;
 using VHDPlus.Analyzer;
 using VHDPlus.Analyzer.Elements;

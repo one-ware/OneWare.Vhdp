@@ -2,8 +2,8 @@
 using System.Reactive.Linq;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using OneWare.SDK.LanguageService;
-using OneWare.SDK.ViewModels;
+using OneWare.Essentials.LanguageService;
+using OneWare.Essentials.ViewModels;
 using VHDPlus.Analyzer;
 using VHDPlus.Analyzer.Checks;
 using VHDPlus.Analyzer.Diagnostics;
