@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <Version>0.3</Version>
+        <Version>0.4</Version>
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
@@ -12,12 +12,15 @@
 
     <ItemGroup>
         <Content Include="oneware.json" CopyToOutputDirectory="PreserveNewest"/>
-        <AvaloniaResource Include="Assets\**\*.*" />
+        <AvaloniaResource Include="Assets\*.*" />
+        <Content Include="Assets\Templates\**\*.*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
     
     <ItemGroup>
-        <PackageReference Include="OneWare.Essentials" Version="0.1" Private="false" ExcludeAssets="runtime;Native"/>
-        <PackageReference Include="OneWare.UniversalFpgaProjectSystem" Version="0.14" Private="false" ExcludeAssets="runtime;Native"/>
+        <PackageReference Include="OneWare.Essentials" Version="0.4.3" Private="false" ExcludeAssets="runtime;Native" />
+        <PackageReference Include="OneWare.UniversalFpgaProjectSystem" Version="0.16.4" Private="false" ExcludeAssets="runtime;Native" />
     </ItemGroup>
     
     <ItemGroup>

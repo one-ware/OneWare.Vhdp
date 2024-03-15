@@ -1,0 +1,16 @@
+Main
+(
+    led: OUT STD_LOGIC := '0';
+)
+{
+    Process()
+    {
+        Thread
+        {
+            led <= '0';
+            Wait(250ms);
+            led <= '1';
+            Wait(250ms);
+        }
+    }
+}

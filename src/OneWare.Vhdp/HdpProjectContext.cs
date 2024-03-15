@@ -37,7 +37,8 @@ public class HdpProjectContext(string workspace)
     
     public void ProcessChanges(string fullPath, Container<TextDocumentContentChangeEvent> changes)
     {
-        _documents[fullPath] = ApplyChanges(_documents[fullPath], changes);
+        if (_documents.TryGetValue(fullPath, out string? value)) 
+            _documents[fullPath] = ApplyChanges(value, changes);
     }
 
     private static string ApplyChanges(string document, IEnumerable<TextDocumentContentChangeEvent> changes)
@@ -164,7 +165,7 @@ public class HdpProjectContext(string workspace)
     
     public void RemovePath(string fullPath)
     {
-        if (_projectRoot?.Search(fullPath) is { } entry)
+        if (_projectRoot?.SearchFullPath(fullPath) is { } entry)
         {
             _analyzerContexts.Remove(fullPath);
         }
