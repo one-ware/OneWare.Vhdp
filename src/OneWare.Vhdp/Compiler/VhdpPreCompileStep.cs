@@ -1,15 +1,16 @@
-﻿using OneWare.UniversalFpgaProjectSystem.Models;
+﻿using OneWare.Essentials.Services;
+using OneWare.UniversalFpgaProjectSystem.Models;
 using OneWare.UniversalFpgaProjectSystem.Services;
 
 namespace OneWare.Vhdp.Compiler;
 
-public class VhdpPreCompileStep : IFpgaPreCompileStep
+public class VhdpPreCompileStep(ILogger logger) : IFpgaPreCompileStep
 {
     public string Name => "VHDP Compiler";
 
     public Task PerformPreCompileStepAsync(UniversalFpgaProjectRoot project, FpgaModel fpga)
     {
-        project.AddFile(Path.Combine("build", "test.vhd"), true);
+        logger.Warning("VHDP Compiler is not implemented yet!", null, true, true);
         return Task.CompletedTask;
     }
 }
