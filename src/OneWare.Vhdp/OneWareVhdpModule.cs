@@ -2,6 +2,7 @@
 using OneWare.Essentials.Services;
 using OneWare.Essentials.ViewModels;
 using OneWare.UniversalFpgaProjectSystem.Services;
+using OneWare.Vhdp.Compiler;
 using OneWare.Vhdp.Templates;
 using Prism.Ioc;
 using Prism.Modularity;
@@ -22,5 +23,6 @@ public class OneWareVhdpModule : IModule
         containerProvider.Resolve<ILanguageManager>().RegisterService(typeof(LanguageServiceVhdp),true, ".vhdp");
 
         containerProvider.Resolve<FpgaService>().RegisterTemplate<VhdpBlinkTemplate>();
+        containerProvider.Resolve<FpgaService>().RegisterPreCompileStep<VhdpPreCompileStep>();
     }
 }

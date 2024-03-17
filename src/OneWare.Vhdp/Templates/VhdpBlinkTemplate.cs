@@ -7,7 +7,7 @@ using OneWare.UniversalFpgaProjectSystem.Services;
 
 namespace OneWare.Vhdp.Templates;
 
-public class VhdpBlinkTemplate(ILogger logger, IDockService dockService) : IFpgaProjectTemplate
+public class VhdpBlinkTemplate(ILogger logger, IDockService dockService, FpgaService fpgaService) : IFpgaProjectTemplate
 {
     public string Name => "VHDP Blink";
 
@@ -25,6 +25,7 @@ public class VhdpBlinkTemplate(ILogger logger, IDockService dockService) : IFpga
             root.TopEntity = file;
             
             root.IncludePath("*.vhdp");
+            root.RegisterPreCompileStep(fpgaService.PreCompileSteps.First(x => x.Name == "VHDP Compiler"));
 
             _ = dockService.OpenFileAsync(file);
         }
