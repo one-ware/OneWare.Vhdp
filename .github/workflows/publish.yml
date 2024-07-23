@@ -23,19 +23,19 @@ jobs:
         uses: kzrnm/get-net-sdk-project-versions-action@v1.3.0
         id: get-version
         with:
-          proj-path: src/OneWare.VhdpExtension/OneWare.VhdpExtension.csproj
+          proj-path: src/OneWare.Vhdp/OneWare.Vhdp.csproj
       - name: Build
-        run: dotnet build src/OneWare.VhdpExtension/OneWare.VhdpExtension.csproj -c Release -o publish
+        run: dotnet build src/OneWare.Vhdp/OneWare.Vhdp.csproj -c Release -o publish
       - name: Compress
         uses: thedoctor0/zip-release@0.7.1
         with:
           type: 'zip'
-          filename: ../OneWare.VhdpExtension_${{steps.get-version.outputs.version}}_all.zip
+          filename: ../OneWare.Vhdp_${{steps.get-version.outputs.version}}_all.zip
           directory: ./publish
       - name: Debug
         run: ls
       - uses: ncipollo/release-action@v1.14.0
         with:
-          artifacts: "OneWare.VhdpExtension_${{steps.get-version.outputs.version}}_all.zip"
+          artifacts: "OneWare.Vhdp_${{steps.get-version.outputs.version}}_all.zip"
           tag: ${{steps.get-version.outputs.version}}
           allowUpdates: true
