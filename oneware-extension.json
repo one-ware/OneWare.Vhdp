@@ -2,7 +2,7 @@
   "category": "Languages",
   "type": "Plugin",
   "name": "VHDP Support",
-  "id": "OneWareVhdpModule",
+  "id": "OneWare.Vhdp",
   "description": "VHDP Language Support for OneWare",
   "license": "MIT",
   "iconUrl": "https://raw.githubusercontent.com/ProtopSolutions/OneWare.Vhdp/main/Icon_256x.png",
@@ -129,6 +129,15 @@
         {
           "target": "osx-arm64",
           "url": "https://github.com/ProtopSolutions/OneWare.Vhdp/releases/download/0.4.3/OneWare.VhdpExtension_0.4.3_osx-arm64.zip"
+        }
+      ]
+    },
+    {
+      "version": "0.4.4",
+      "targets": [
+        {
+          "target": "all",
+          "url": "https://github.com/ProtopSolutions/OneWare.Vhdp/releases/download/0.4.4/OneWare.VhdpExtension_0.4.4_all.zip"
         }
       ]
     }
